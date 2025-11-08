@@ -29,7 +29,7 @@ const createUser = async (req, res) => {
       otpExpiry,
       lockIds = [],
     } = req.body;
-    console.log(`[API] Create user - email: ${email || 'N/A'}, role: ${role}`);
+    console.log(`[API] Create user - email: ${email || "N/A"}, role: ${role}`);
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Thiếu tên, email hoặc mật khẩu" });
@@ -133,8 +133,15 @@ const getUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
+  console.log(`[API] PUT /users/:id - ${new Date().toISOString()}`);
+  console.log(
+    `[API] Update user - id: ${req.params.id}, requester: ${
+      req.user?.email || "N/A"
+    }`
+  );
   try {
     const targetId = req.params.id;
+    const { lockIds } = req.body;
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(targetId)) {
@@ -187,10 +194,52 @@ const updateUser = async (req, res) => {
 
     await user.save();
 
+    // Cập nhật quyền truy cập khóa nếu lockIds được cung cấp (chỉ admin mới có quyền)
+    if (lockIds !== undefined && req.user.role === "admin") {
+      const Lock = require("../models/Lock");
+      const UserLock = require("../models/UserLock");
+
+      // Validate lock IDs
+      const validLockIds = Array.isArray(lockIds)
+        ? lockIds.filter((id) => mongoose.Types.ObjectId.isValid(id))
+        : [];
+
+      // Kiểm tra các lock có tồn tại không
+      const existingLocks = await Lock.find({
+        _id: { $in: validLockIds },
+      }).select("_id");
+
+      const validLocks = existingLocks.map((lock) => lock._id);
+
+      // Xóa tất cả assignments cũ của user này
+      await UserLock.deleteMany({ user: user._id });
+
+      // Tạo assignments mới nếu có locks hợp lệ
+      if (validLocks.length > 0) {
+        const assignments = validLocks.map((lockId) => ({
+          user: user._id,
+          lock: lockId,
+        }));
+
+        await UserLock.insertMany(assignments, { ordered: false }).catch(
+          () => {}
+        );
+        console.log(
+          `[User] Updated lock access for user ${user.name}: ${validLocks.length} lock(s)`
+        );
+      } else if (Array.isArray(lockIds) && lockIds.length === 0) {
+        // Nếu lockIds là mảng rỗng, đã xóa hết assignments ở trên
+        console.log(`[User] Removed all lock access for user ${user.name}`);
+      }
+    }
+
     await recordLog({
       user: req.user._id,
       action: "user.update",
-      metadata: { targetUser: user._id },
+      metadata: {
+        targetUser: user._id,
+        lockIds: lockIds !== undefined ? lockIds : undefined,
+      },
     });
 
     res.json({ user });

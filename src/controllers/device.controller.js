@@ -10,7 +10,9 @@ const registerDevice = async (req, res) => {
   console.log(`[API] POST /device/register - ${new Date().toISOString()}`);
   try {
     const { name, location } = req.body;
-    console.log(`[API] Register device - name: ${name}, location: ${location || 'N/A'}`);
+    console.log(
+      `[API] Register device - name: ${name}, location: ${location || "N/A"}`
+    );
     if (!name) {
       return res.status(400).json({ error: "Tên thiết bị là bắt buộc" });
     }
@@ -44,7 +46,11 @@ const getCommand = async (req, res) => {
   console.log(`[API] GET /device/cmd - ${new Date().toISOString()}`);
   try {
     const { token } = req.query;
-    console.log(`[API] Get command - token: ${token ? token.substring(0, 8) + '...' : 'N/A'}`);
+    console.log(
+      `[API] Get command - token: ${
+        token ? token.substring(0, 8) + "..." : "N/A"
+      }`
+    );
     if (!token) {
       return res.status(400).json({ error: "Thiếu token thiết bị" });
     }
@@ -78,7 +84,13 @@ const reportStatus = async (req, res) => {
   console.log(`[API] POST /device/status - ${new Date().toISOString()}`);
   try {
     const { token, status, commandId, success = true } = req.body;
-    console.log(`[API] Report status - token: ${token ? token.substring(0, 8) + '...' : 'N/A'}, status: ${status}, commandId: ${commandId || 'N/A'}, pin: ${req.body.pin || req.body.usedPin || 'N/A'}`);
+    console.log(
+      `[API] Report status - token: ${
+        token ? token.substring(0, 8) + "..." : "N/A"
+      }, status: ${status}, commandId: ${commandId || "N/A"}, pin: ${
+        req.body.pin || req.body.usedPin || "N/A"
+      }`
+    );
     if (!token || status === undefined || status === null) {
       return res.status(400).json({ error: "Thiếu token hoặc trạng thái" });
     }
@@ -222,7 +234,11 @@ const reportStatus = async (req, res) => {
 const syncData = async (req, res) => {
   const token = req.query.token || req.body?.token;
   console.log(`[API] GET /device/sync - ${new Date().toISOString()}`);
-  console.log(`[API] Sync data - token: ${token ? token.substring(0, 8) + '...' : 'N/A'}, format: ${req.query.format || 'full'}`);
+  console.log(
+    `[API] Sync data - token: ${
+      token ? token.substring(0, 8) + "..." : "N/A"
+    }, format: ${req.query.format || "full"}`
+  );
   try {
     if (!token) {
       return res.status(400).json({ error: "Thiếu token thiết bị" });
@@ -390,7 +406,11 @@ const syncLogs = async (req, res) => {
   console.log(`[API] POST /device/logs/sync - ${new Date().toISOString()}`);
   try {
     const { token, logs } = req.body || {};
-    console.log(`[API] Sync logs - token: ${token ? token.substring(0, 8) + '...' : 'N/A'}, logs count: ${Array.isArray(logs) ? logs.length : 0}`);
+    console.log(
+      `[API] Sync logs - token: ${
+        token ? token.substring(0, 8) + "..." : "N/A"
+      }, logs count: ${Array.isArray(logs) ? logs.length : 0}`
+    );
     if (!token) {
       return res.status(400).json({ error: "Thiếu token thiết bị" });
     }
@@ -474,11 +494,17 @@ const consumeOtp = async (req, res) => {
   console.log(`[API] POST /device/otp/consume - ${new Date().toISOString()}`);
   try {
     const { token, otp } = req.body;
-    console.log(`[API] Consume OTP - token: ${token ? token.substring(0, 8) + '...' : 'N/A'}, otp: ${otp || 'N/A'}`);
+    console.log(
+      `[API] Consume OTP - token: ${
+        token ? token.substring(0, 8) + "..." : "N/A"
+      }, otp: ${otp || "N/A"}`
+    );
 
     // ESP chỉ gửi token và otp
     if (!token || !otp) {
-      return res.status(400).json({ error: "Thiếu token thiết bị hoặc mã OTP" });
+      return res
+        .status(400)
+        .json({ error: "Thiếu token thiết bị hoặc mã OTP" });
     }
 
     const lock = await Lock.findOne({ token });
